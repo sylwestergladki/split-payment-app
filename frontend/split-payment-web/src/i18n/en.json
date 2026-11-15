@@ -1,0 +1,84 @@
+
+{
+  "app": {
+    "name": "Split Payment",
+    "title": "Shared expenses.",
+    "subtitle": "Simple settlements.",
+    "description": "Organize shared expenses, track balances and settle up with friends.",
+    "loggedInAs": "Logged in as",
+    "logout": "Log out",
+    "myGroups": "My groups",
+    "hideGroups": "Hide groups",
+    "addExpense": "Add expense",
+    "footer": "Split Payment — shared finances made simple"
+  },
+  "features": {
+    "groups": {
+      "title": "Create groups",
+      "description": "Organize expenses with friends."
+    },
+    "expenses": {
+      "title": "Track expenses",
+      "description": "Keep track of who paid for what."
+    },
+    "balances": {
+      "title": "Settle balances",
+      "description": "See who owes whom."
+    }
+  },
+  "groups": {
+    "title": "Your groups",
+    "description": "All your shared expenses in one place.",
+    "new": "New group",
+    "create": "Create group",
+    "creating": "Creating...",
+    "name": "Group name",
+    "namePlaceholder": "e.g. Summer vacation",
+    "formDescription": "Create a group to share expenses.",
+    "members": "Members",
+    "createdAt": "Created",
+    "details": "View details",
+    "back": "Back to groups",
+    "detailsTitle": "Group details",
+    "memberCount": "Number of members",
+    "groupId": "Group ID",
+    "membersTitle": "Group members",
+    "noMembers": "This group has no members yet.",
+    "joinedAt": "Joined",
+    "empty": "You don't have any groups yet.",
+    "emptyHint": "Click New group to get started.",
+    "loading": "Loading groups...",
+    "loadingDetails": "Loading group details...",
+    "loadError": "Failed to load groups.",
+    "detailsError": "Failed to load group details.",
+    "createError": "Failed to create group.",
+    "nameRequired": "Enter a group name."
+  },
+  "expenses": {
+    "title": "Expenses",
+    "new": "New expense",
+    "add": "Add expense",
+    "saving": "Saving...",
+    "description": "Description",
+    "descriptionPlaceholder": "e.g. Groceries",
+    "amount": "Amount",
+    "paidBy": "Who paid?",
+    "participants": "Who should split the cost?",
+    "total": "Total expenses",
+    "count": "Number of expenses",
+    "participantsCount": "Participants",
+    "empty": "No expenses in this group yet.",
+    "loading": "Loading expenses...",
+    "loadError": "Failed to load expenses.",
+    "createError": "Failed to create expense.",
+    "descriptionRequired": "Enter a description.",
+    "amountInvalid": "Amount must be greater than zero.",
+    "payerRequired": "Select who paid.",
+    "participantsRequired": "Select at least one participant."
+  },
+  "common": {
+    "cancel": "Cancel",
+    "unknownUser": "Unknown user",
+    "user": "User"
+  }
+}

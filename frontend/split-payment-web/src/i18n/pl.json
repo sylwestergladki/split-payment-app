@@ -1,0 +1,84 @@
+
+{
+  "app": {
+    "name": "Split Payment",
+    "title": "Wspólne wydatki.",
+    "subtitle": "Proste rozliczenia.",
+    "description": "Organizuj wspólne wydatki, kontroluj salda i rozliczaj się ze znajomymi.",
+    "loggedInAs": "Zalogowano jako",
+    "logout": "Wyloguj się",
+    "myGroups": "Moje grupy",
+    "hideGroups": "Ukryj grupy",
+    "addExpense": "Dodaj wydatek",
+    "footer": "Split Payment — wspólne finanse bez komplikacji"
+  },
+  "features": {
+    "groups": {
+      "title": "Twórz grupy",
+      "description": "Organizuj wydatki ze znajomymi."
+    },
+    "expenses": {
+      "title": "Dodawaj wydatki",
+      "description": "Zapisuj, kto i za co zapłacił."
+    },
+    "balances": {
+      "title": "Rozliczaj salda",
+      "description": "Sprawdzaj, kto komu jest winien."
+    }
+  },
+  "groups": {
+    "title": "Twoje grupy",
+    "description": "Twoje wspólne wydatki w jednym miejscu.",
+    "new": "Nowa grupa",
+    "create": "Utwórz grupę",
+    "creating": "Tworzenie...",
+    "name": "Nazwa grupy",
+    "namePlaceholder": "Np. Wakacje 2026",
+    "formDescription": "Utwórz grupę do wspólnego rozliczania wydatków.",
+    "members": "Członkowie",
+    "createdAt": "Utworzono",
+    "details": "Zobacz szczegóły",
+    "back": "Wróć do grup",
+    "detailsTitle": "Szczegóły grupy",
+    "memberCount": "Liczba członków",
+    "groupId": "Identyfikator grupy",
+    "membersTitle": "Członkowie grupy",
+    "noMembers": "Ta grupa nie ma jeszcze członków.",
+    "joinedAt": "Dołączył",
+    "empty": "Nie masz jeszcze żadnej grupy.",
+    "emptyHint": "Kliknij Nowa grupa, aby rozpocząć.",
+    "loading": "Ładowanie grup...",
+    "loadingDetails": "Ładowanie szczegółów grupy...",
+    "loadError": "Nie udało się pobrać grup.",
+    "detailsError": "Nie udało się pobrać szczegółów grupy.",
+    "createError": "Nie udało się utworzyć grupy.",
+    "nameRequired": "Podaj nazwę grupy."
+  },
+  "expenses": {
+    "title": "Wydatki",
+    "new": "Nowy wydatek",
+    "add": "Dodaj wydatek",
+    "saving": "Zapisywanie...",
+    "description": "Opis",
+    "descriptionPlaceholder": "Np. Zakupy spożywcze",
+    "amount": "Kwota",
+    "paidBy": "Kto zapłacił?",
+    "participants": "Między kogo dzielimy koszt?",
+    "total": "Łączne wydatki",
+    "count": "Liczba wydatków",
+    "participantsCount": "Uczestnicy",
+    "empty": "Brak wydatków w tej grupie.",
+    "loading": "Ładowanie wydatków...",
+    "loadError": "Nie udało się pobrać wydatków.",
+    "createError": "Nie udało się utworzyć wydatku.",
+    "descriptionRequired": "Podaj opis wydatku.",
+    "amountInvalid": "Kwota musi być większa od zera.",
+    "payerRequired": "Wybierz osobę, która zapłaciła.",
+    "participantsRequired": "Wybierz przynajmniej jednego uczestnika."
+  },
+  "common": {
+    "cancel": "Anuluj",
+    "unknownUser": "Nieznany użytkownik",
+    "user": "Użytkownik"
+  }
+}
