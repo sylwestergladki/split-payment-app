@@ -6,9 +6,6 @@ import java.util.List;
 
 public record ExpenseParsingContext(
         UserId requesterId,
-        List<ParsingGroupMember> members
+        List<ParsingGroup> groups
 ) {
-    public ExpenseParsingContext {
-        members = List.copyOf(members);
-    }
 }

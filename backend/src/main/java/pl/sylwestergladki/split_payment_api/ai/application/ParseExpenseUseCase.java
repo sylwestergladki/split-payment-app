@@ -3,42 +3,32 @@ package pl.sylwestergladki.split_payment_api.ai.application;
 
 import org.springframework.stereotype.Service;
 import pl.sylwestergladki.split_payment_api.ai.application.model.ExpenseParsingContext;
-import pl.sylwestergladki.split_payment_api.ai.application.model.ParsingGroupMember;
+import pl.sylwestergladki.split_payment_api.ai.application.model.ExpenseResolutionContext;
 import pl.sylwestergladki.split_payment_api.ai.application.model.ResolvedExpense;
+import pl.sylwestergladki.split_payment_api.ai.application.port.ExpenseParsingGroupProvider;
 import pl.sylwestergladki.split_payment_api.ai.application.port.ExpenseTextParser;
-import pl.sylwestergladki.split_payment_api.ai.application.port.GroupMemberDisplayNameProvider;
-import pl.sylwestergladki.split_payment_api.groups.domain.GroupId;
-
-import pl.sylwestergladki.split_payment_api.groups.domain.exception.GroupNotFoundException;
-import pl.sylwestergladki.split_payment_api.groups.domain.repository.GroupRepository;
 import pl.sylwestergladki.split_payment_api.identity.domain.UserId;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class ParseExpenseUseCase {
 
-    private final GroupRepository groupRepository;
+    private final ExpenseParsingGroupProvider groupProvider;
     private final ExpenseTextParser expenseTextParser;
-    private final GroupMemberDisplayNameProvider memberProvider;
     private final ParsedExpenseResolver resolver;
 
     public ParseExpenseUseCase(
-            GroupRepository groupRepository,
+            ExpenseParsingGroupProvider groupProvider,
             ExpenseTextParser expenseTextParser,
-            GroupMemberDisplayNameProvider memberProvider,
             ParsedExpenseResolver resolver
     ) {
-        this.groupRepository = groupRepository;
+        this.groupProvider = groupProvider;
         this.expenseTextParser = expenseTextParser;
-        this.memberProvider = memberProvider;
         this.resolver = resolver;
     }
 
     public ResolvedExpense execute(
-            GroupId groupId,
             UserId requesterId,
             String text
     ) {
@@ -54,40 +44,53 @@ public class ParseExpenseUseCase {
             );
         }
 
-        var group = groupRepository.findById(groupId)
-                .orElseThrow(GroupNotFoundException::new);
+        var groups = groupProvider.findGroupsForUser(requesterId);
 
-        if (!group.hasMember(requesterId)) {
+        if (groups.isEmpty()) {
             throw new IllegalArgumentException(
-                    "Requester is not a member of the group"
+                    "Requester does not belong to any group"
             );
         }
 
-        List<UserId> memberIds = group.members()
-                .stream()
-                .map(member -> member.userId())
-                .toList();
-
-        var members = memberProvider.findMembers(memberIds);
-
-        var resolvedIds = members.stream()
-                .map(ParsingGroupMember::userId)
-                .collect(Collectors.toSet());
-
-        if (members.size() != memberIds.size()
-                || !resolvedIds.equals(new HashSet<>(memberIds))) {
-            throw new IllegalStateException(
-                    "Could not resolve all group members"
-            );
-        }
-
-        var context = new ExpenseParsingContext(
+        var parsingContext = new ExpenseParsingContext(
                 requesterId,
-                members
+                groups
         );
 
-        var parsed = expenseTextParser.parse(text, context);
+        var parsed = expenseTextParser.parse(text, parsingContext);
 
-        return resolver.resolve(parsed, context);
+        if (parsed.groupId() == null) {
+            throw new IllegalArgumentException(
+                    "Could not identify expense group"
+            );
+        }
+
+        boolean groupAllowed = groups.stream()
+                .anyMatch(group ->
+                        group.groupId().value()
+                                .equals(parsed.groupId())
+                );
+
+        if (!groupAllowed) {
+            throw new IllegalArgumentException(
+                    "Parsed group is not available to requester"
+            );
+        }
+
+        var selectedGroup = groups.stream()
+                .filter(group ->
+                        group.groupId().value()
+                                .equals(parsed.groupId())
+                )
+                .findFirst()
+                .orElseThrow();
+
+        var resolutionContext = new ExpenseResolutionContext(
+                selectedGroup.groupId(),
+                requesterId,
+                selectedGroup.members()
+        );
+
+        return resolver.resolve(parsed, resolutionContext);
     }
 }

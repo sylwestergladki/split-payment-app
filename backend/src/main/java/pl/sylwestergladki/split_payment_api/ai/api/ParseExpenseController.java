@@ -12,7 +12,7 @@ import pl.sylwestergladki.split_payment_api.groups.domain.GroupId;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/groups/{groupId}/expenses/parse")
+@RequestMapping("/api/expenses/parse")
 public class ParseExpenseController {
 
     private final ParseExpenseUseCase parseExpenseUseCase;
@@ -28,7 +28,6 @@ public class ParseExpenseController {
 
     @PostMapping
     public ResponseEntity<ParseExpenseResponse> parse(
-            @PathVariable UUID groupId,
             @Valid @RequestBody ParseExpenseRequest request,
             @AuthenticationPrincipal Jwt jwt
     ) {
@@ -37,7 +36,6 @@ public class ParseExpenseController {
         );
 
         var parsedExpense = parseExpenseUseCase.execute(
-                new GroupId(groupId),
                 requesterId,
                 request.text()
         );

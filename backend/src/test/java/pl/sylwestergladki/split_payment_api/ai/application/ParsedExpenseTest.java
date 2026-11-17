@@ -5,6 +5,7 @@ import pl.sylwestergladki.split_payment_api.ai.application.model.ParsedExpense;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -12,8 +13,11 @@ class ParsedExpenseTest {
 
     @Test
     void shouldHoldParsedExpenseData() {
+        var groupId = UUID.randomUUID();
+
         // given
         var parsedExpense = new ParsedExpense(
+                groupId,
                 "Dinner",
                 new BigDecimal("180.00"),
                 "PLN",
@@ -22,6 +26,9 @@ class ParsedExpenseTest {
         );
 
         // then
+        assertThat(parsedExpense.groupId())
+                .isEqualTo(groupId);
+
         assertThat(parsedExpense.description())
                 .isEqualTo("Dinner");
 

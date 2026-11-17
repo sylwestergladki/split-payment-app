@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.UUID;
 
 public record ParseExpenseResponse(
+        UUID groupId,
         String description,
         BigDecimal amount,
         String currency,
@@ -19,6 +20,7 @@ public record ParseExpenseResponse(
             ResolvedExpense expense
     ) {
         return new ParseExpenseResponse(
+                expense.groupId().value(),
                 expense.description(),
                 expense.amount(),
                 expense.currency(),

@@ -14,6 +14,7 @@ public record GroupResponse(
 
     public record GroupMemberResponse(
             UUID userId,
+            String displayName,
             Instant joinedAt
     ) {}
 }

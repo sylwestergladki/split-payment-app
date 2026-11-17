@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
 import pl.sylwestergladki.split_payment_api.ai.application.ParseExpenseUseCase;
 import pl.sylwestergladki.split_payment_api.ai.application.model.ResolvedExpense;
 import pl.sylwestergladki.split_payment_api.groups.application.FindUserIdByKeycloakSubjectUseCase;
@@ -29,6 +30,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(SecurityConfig.class)
 class ParseExpenseControllerTest {
 
+    private static final String KEYCLOAK_SUBJECT =
+            "keycloak-user-123";
+
+    private static final String EXPENSE_TEXT =
+            "I paid 180 pln for dinner for me and Anna";
+
+    private static final String PARSE_ENDPOINT =
+            "/api/expenses/parse";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -41,11 +51,12 @@ class ParseExpenseControllerTest {
     @Test
     void shouldParseExpense() throws Exception {
         // given
-        var groupId = UUID.randomUUID();
-        var requesterId = new UserId(UUID.randomUUID());
-        var annaId = new UserId(UUID.randomUUID());
+        var groupId = new GroupId(UUID.randomUUID());
+        var requesterId = UserId.generate();
+        var annaId = UserId.generate();
 
         var resolvedExpense = new ResolvedExpense(
+                groupId,
                 "Dinner",
                 new BigDecimal("180.00"),
                 "PLN",
@@ -53,62 +64,55 @@ class ParseExpenseControllerTest {
                 List.of(requesterId, annaId)
         );
 
-        when(findUserIdUseCase.execute("keycloak-user-123"))
+        when(findUserIdUseCase.execute(KEYCLOAK_SUBJECT))
                 .thenReturn(requesterId);
 
         when(parseExpenseUseCase.execute(
-                eq(new GroupId(groupId)),
                 eq(requesterId),
-                eq("I paid 180 pln for dinner for me and Anna")
+                eq(EXPENSE_TEXT)
         )).thenReturn(resolvedExpense);
 
         // when / then
-        mockMvc.perform(post(
-                        "/api/groups/{groupId}/expenses/parse",
-                        groupId
-                )
+        mockMvc.perform(post(PARSE_ENDPOINT)
                         .with(jwt().jwt(jwt ->
-                                jwt.subject("keycloak-user-123")
-                        ))
+                                jwt.subject(KEYCLOAK_SUBJECT)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "text": "I paid 180 pln for dinner for me and Anna"
+                                  "text": "%s"
                                 }
-                                """))
+                                """.formatted(EXPENSE_TEXT)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.description").value("Dinner"))
-                .andExpect(jsonPath("$.amount").value(180.0))
-                .andExpect(jsonPath("$.currency").value("PLN"))
-                .andExpect(jsonPath("$.paidByUserId")
+                .andExpect(jsonPath("$.groupId")
+                        .value(groupId.value().toString()))
+                .andExpect(jsonPath("$.description")
+                        .value("Dinner"))
+                .andExpect(jsonPath("$.amount")
+                        .value(180.0))
+                .andExpect(jsonPath("$.currency")
+                        .value("PLN"))
+                .andExpect(jsonPath("$.paidBy")
                         .value(requesterId.value().toString()))
-                .andExpect(jsonPath("$.participantUserIds[0]")
+                .andExpect(jsonPath("$.participants.length()")
+                        .value(2))
+                .andExpect(jsonPath("$.participants[0]")
                         .value(requesterId.value().toString()))
-                .andExpect(jsonPath("$.participantUserIds[1]")
-                        .value(annaId.value().toString()))
-                .andExpect(jsonPath("$.participantUserIds.length()")
-                        .value(2));
+                .andExpect(jsonPath("$.participants[1]")
+                        .value(annaId.value().toString()));
 
         verify(findUserIdUseCase)
-                .execute("keycloak-user-123");
+                .execute(KEYCLOAK_SUBJECT);
 
         verify(parseExpenseUseCase).execute(
-                new GroupId(groupId),
                 requesterId,
-                "I paid 180 pln for dinner for me and Anna"
+                EXPENSE_TEXT
         );
     }
 
     @Test
     void shouldRejectBlankText() throws Exception {
-        // given
-        var groupId = UUID.randomUUID();
-
         // when / then
-        mockMvc.perform(post(
-                        "/api/groups/{groupId}/expenses/parse",
-                        groupId
-                )
+        mockMvc.perform(post(PARSE_ENDPOINT)
                         .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -124,14 +128,8 @@ class ParseExpenseControllerTest {
 
     @Test
     void shouldRejectUnauthenticatedRequest() throws Exception {
-        // given
-        var groupId = UUID.randomUUID();
-
         // when / then
-        mockMvc.perform(post(
-                        "/api/groups/{groupId}/expenses/parse",
-                        groupId
-                )
+        mockMvc.perform(post(PARSE_ENDPOINT)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -147,15 +145,12 @@ class ParseExpenseControllerTest {
     @Test
     void shouldRejectTextLongerThan1000Characters()
             throws Exception {
+
         // given
-        var groupId = UUID.randomUUID();
         var text = "a".repeat(1001);
 
         // when / then
-        mockMvc.perform(post(
-                        "/api/groups/{groupId}/expenses/parse",
-                        groupId
-                )
+        mockMvc.perform(post(PARSE_ENDPOINT)
                         .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -163,6 +158,19 @@ class ParseExpenseControllerTest {
                                   "text": "%s"
                                 }
                                 """.formatted(text)))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(parseExpenseUseCase);
+        verifyNoInteractions(findUserIdUseCase);
+    }
+
+    @Test
+    void shouldRejectMissingText() throws Exception {
+        // when / then
+        mockMvc.perform(post(PARSE_ENDPOINT)
+                        .with(jwt())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(parseExpenseUseCase);

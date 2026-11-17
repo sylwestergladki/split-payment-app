@@ -1,9 +1,8 @@
 package pl.sylwestergladki.split_payment_api.ai.application;
 
-
-
 import org.springframework.stereotype.Component;
-import pl.sylwestergladki.split_payment_api.ai.application.model.ExpenseParsingContext;
+
+import pl.sylwestergladki.split_payment_api.ai.application.model.ExpenseResolutionContext;
 import pl.sylwestergladki.split_payment_api.ai.application.model.ParsedExpense;
 import pl.sylwestergladki.split_payment_api.ai.application.model.ParsingGroupMember;
 import pl.sylwestergladki.split_payment_api.ai.application.model.ResolvedExpense;
@@ -18,10 +17,26 @@ public class ParsedExpenseResolver {
 
     public ResolvedExpense resolve(
             ParsedExpense parsed,
-            ExpenseParsingContext context
+            ExpenseResolutionContext context
     ) {
         if (parsed == null) {
-            throw new IllegalArgumentException("AI returned no expense");
+            throw new IllegalArgumentException(
+                    "AI returned no expense"
+            );
+        }
+
+        if (context == null) {
+            throw new IllegalArgumentException(
+                    "Expense resolution context is required"
+            );
+        }
+
+        if (parsed.groupId() == null
+                || context.groupId() == null
+                || !context.groupId().value().equals(parsed.groupId())) {
+            throw new IllegalArgumentException(
+                    "Parsed group does not match resolution context"
+            );
         }
 
         if (parsed.description() == null
@@ -51,6 +66,25 @@ public class ParsedExpenseResolver {
             );
         }
 
+        if (context.members() == null
+                || context.members().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Group members are required"
+            );
+        }
+
+        boolean requesterIsMember = context.members()
+                .stream()
+                .anyMatch(member ->
+                        member.userId().equals(context.requesterId())
+                );
+
+        if (!requesterIsMember) {
+            throw new IllegalArgumentException(
+                    "Requester is not a member of the group"
+            );
+        }
+
         UserId payerId = resolveUser(
                 parsed.paidBy(),
                 context
@@ -71,7 +105,9 @@ public class ParsedExpenseResolver {
             }
         }
 
+
         return new ResolvedExpense(
+                context.groupId(),
                 parsed.description().trim(),
                 parsed.amount(),
                 parsed.currency(),
@@ -82,7 +118,7 @@ public class ParsedExpenseResolver {
 
     private UserId resolveUser(
             String name,
-            ExpenseParsingContext context
+            ExpenseResolutionContext context
     ) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException(
@@ -99,10 +135,12 @@ public class ParsedExpenseResolver {
 
         List<ParsingGroupMember> matches = context.members()
                 .stream()
-                .filter(member -> member.displayName()
-                        .trim()
-                        .toLowerCase(Locale.ROOT)
-                        .equals(normalized))
+                .filter(member ->
+                        member.displayName()
+                                .trim()
+                                .toLowerCase(Locale.ROOT)
+                                .equals(normalized)
+                )
                 .toList();
 
         if (matches.isEmpty()) {

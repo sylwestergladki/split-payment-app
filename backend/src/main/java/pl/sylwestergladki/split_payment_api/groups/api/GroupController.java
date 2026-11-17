@@ -11,10 +11,16 @@ import pl.sylwestergladki.split_payment_api.groups.application.GetGroupDetailsUs
 import pl.sylwestergladki.split_payment_api.groups.application.GetUserGroupsUseCase;
 import pl.sylwestergladki.split_payment_api.groups.domain.Group;
 import pl.sylwestergladki.split_payment_api.groups.domain.GroupId;
+import pl.sylwestergladki.split_payment_api.groups.domain.model.GroupMember;
+import pl.sylwestergladki.split_payment_api.identity.application.GetUsersByIdsUseCase;
+import pl.sylwestergladki.split_payment_api.identity.domain.AppUser;
 import pl.sylwestergladki.split_payment_api.identity.domain.UserId;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/groups")
@@ -24,15 +30,17 @@ public class GroupController {
     private final FindUserIdByKeycloakSubjectUseCase findUserIdUseCase;
     private final GetUserGroupsUseCase getUserGroupsUseCase;
     private final GetGroupDetailsUseCase getGroupDetailsUseCase;
+    private final GetUsersByIdsUseCase getUsersByIdsUseCase;
 
     public GroupController(
             CreateGroupUseCase createGroupUseCase,
-            FindUserIdByKeycloakSubjectUseCase findUserIdUseCase, GetUserGroupsUseCase getUserGroupsUseCase, GetGroupDetailsUseCase getGroupDetailsUseCase
+            FindUserIdByKeycloakSubjectUseCase findUserIdUseCase, GetUserGroupsUseCase getUserGroupsUseCase, GetGroupDetailsUseCase getGroupDetailsUseCase, GetUsersByIdsUseCase getUsersByIdsUseCase
     ) {
         this.createGroupUseCase = createGroupUseCase;
         this.findUserIdUseCase = findUserIdUseCase;
         this.getUserGroupsUseCase = getUserGroupsUseCase;
         this.getGroupDetailsUseCase = getGroupDetailsUseCase;
+        this.getUsersByIdsUseCase = getUsersByIdsUseCase;
     }
 
     @PostMapping
@@ -85,16 +93,36 @@ public class GroupController {
     }
 
     private GroupResponse toResponse(Group group) {
+
+        List<UserId> memberIds = group.members().stream()
+                .map(GroupMember::userId)
+                .toList();
+
+        Map<UserId, AppUser> usersById =
+                getUsersByIdsUseCase.execute(memberIds)
+                        .stream()
+                        .collect(Collectors.toMap(
+                                AppUser::id,
+                                Function.identity()
+                        ));
+
         return new GroupResponse(
                 group.id().value(),
                 group.name(),
                 group.createdBy().value(),
                 group.createdAt(),
                 group.members().stream()
-                        .map(member -> new GroupResponse.GroupMemberResponse(
-                                member.userId().value(),
-                                member.joinedAt()
-                        ))
+                        .map(member -> {
+                            AppUser user = usersById.get(member.userId());
+
+                            return new GroupResponse.GroupMemberResponse(
+                                    member.userId().value(),
+                                    user != null
+                                            ? user.displayName()
+                                            : "Unknown user",
+                                    member.joinedAt()
+                            );
+                        })
                         .toList()
         );
     }

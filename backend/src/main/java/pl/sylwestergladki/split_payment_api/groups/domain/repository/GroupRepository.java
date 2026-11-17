@@ -2,6 +2,7 @@ package pl.sylwestergladki.split_payment_api.groups.domain.repository;
 
 import pl.sylwestergladki.split_payment_api.groups.domain.Group;
 import pl.sylwestergladki.split_payment_api.groups.domain.GroupId;
+import pl.sylwestergladki.split_payment_api.groups.infrastructure.persistance.GroupEntity;
 import pl.sylwestergladki.split_payment_api.identity.domain.UserId;
 
 import java.util.List;
@@ -14,4 +15,6 @@ public interface GroupRepository {
     Optional<Group> findById(GroupId id);
 
     List<Group> findAllByMemberId(UserId userId);
+
+    List<Group> findByMemberId(UserId requesterId);
 }

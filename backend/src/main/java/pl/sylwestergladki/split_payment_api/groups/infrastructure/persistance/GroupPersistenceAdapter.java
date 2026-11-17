@@ -79,6 +79,14 @@ public class GroupPersistenceAdapter implements GroupRepository {
                 .toList();
     }
 
+    @Override
+    public List<Group> findByMemberId(UserId requesterId) {
+        return jpaRepository.findDistinctByMembersUserId(requesterId.value())
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
     private GroupEntity toEntity(Group group) {
         GroupEntity entity = new GroupEntity(
                 group.id().value(),
